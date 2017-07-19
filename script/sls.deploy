@@ -33,6 +33,18 @@ then
         PLUGIN_ACTION='build'
     fi
 
+    if [ $2 == 'fail:partialCredentials' ];
+    then
+        PLUGIN_AWS_SECRET_ACCESS_ID='set'
+        unset PLUGIN_AWS_SECRET_KEY
+    fi
+
+    if [ $2 == 'fail:partialCredentials2' ];
+    then
+        unset PLUGIN_AWS_SECRET_ACCESS_ID
+        PLUGIN_AWS_SECRET_KEY='set'
+    fi
+
 fi
 
 if [ -z $DRONE_YAML_VERIFIED ] && [ -z $PLUGIN_AWS_SECRET_ACCESS_ID ] && [ -z $PLUGIN_AWS_SECRET_KEY ];
@@ -47,7 +59,7 @@ then
     exit 1
 fi
 
-if [ $PLUGIN_AWS_SECRET_ACCESS_ID -a $PLUGIN_AWS_SECRET_KEY ];
+if [ $PLUGIN_AWS_SECRET_ACCESS_ID] && [$PLUGIN_AWS_SECRET_KEY ];
 then
     echo "configuring serverless with custom AWS credentials"
     sls config credentials \
