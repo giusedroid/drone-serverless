@@ -50,7 +50,7 @@ fi
 if [ $PLUGIN_AWS_SECRET_ACCESS_ID -a $PLUGIN_AWS_SECRET_KEY ];
 then
     echo "configuring serverless with custom AWS credentials"
-    sls configure credentials \
+    sls config credentials \
          --provider "aws" \
          --key $PLUGIN_AWS_SECRET_ACCESS_ID \
          --secret $PLUGIN_AWS_SECRET_KEY
