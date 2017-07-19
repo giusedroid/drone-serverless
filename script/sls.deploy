@@ -1,0 +1,73 @@
+#!/bin/bash -e
+
+if [ $1 == 'test' ];
+then
+    echo "Test mode"
+
+    function sls {
+        echo "Testing sls with parameters $@"
+    }
+
+    if [ $2 == 'fail:validation' ];
+    then
+        unset DRONE_YAML_VERIFIED
+        unset PLUGIN_AWS_SECRET_ACCESS_ID
+        unset PLUGIN_AWS_SECRET_KEY
+    fi
+
+    if [ $2 == 'deploy:withCredentials' -o $2 == 'build:withCredentials' ];
+    then
+        PLUGIN_AWS_SECRET_ACCESS_ID='set'
+        PLUGIN_AWS_SECRET_KEY='set'
+    fi
+
+    if [ $2 == 'deploy' -o $2 == 'deploy:withCredentials' ];
+    then
+        DRONE_YAML_VERIFIED='true'
+        PLUGIN_ACTION='deploy'
+    fi
+
+    if [ $2 == 'build' -o $2 == 'build:withCredentials' ];
+    then
+        DRONE_YAML_VERIFIED='true'
+        PLUGIN_ACTION='build'
+    fi
+
+fi
+
+if [ -z $DRONE_YAML_VERIFIED ] && [ -z $PLUGIN_AWS_SECRET_ACCESS_ID ] && [ -z $PLUGIN_AWS_SECRET_KEY ];
+then
+    echo "Error: drone YAML is unverified when not using AWS IAM role"
+    exit 1
+fi
+
+if [ -z $PLUGIN_AWS_SECRET_ACCESS_ID -a $PLUGIN_AWS_SECRET_KEY ] || [ -z $PLUGIN_AWS_SECRET_KEY -a $PLUGIN_AWS_SECRET_ACCESS_ID ];
+then
+    echo "Error: please, provide both AWS credentials"
+    exit 1
+fi
+
+if [ $PLUGIN_AWS_SECRET_ACCESS_ID -a $PLUGIN_AWS_SECRET_KEY ];
+then
+    echo "configuring serverless with custom AWS credentials"
+    sls configure credentials \
+         --provider "aws" \
+         --key $PLUGIN_AWS_SECRET_ACCESS_ID \
+         --secret $PLUGIN_AWS_SECRET_KEY
+fi 
+
+if [ $PLUGIN_ACTION == 'deploy' ];
+then
+    echo "Deploying Lamba Function"
+    sls deploy \
+        --stage $DRONE_DEPLOY_TO \
+        --verbose 
+fi
+
+if [ $PLUGIN_ACTION == 'build' ];
+then
+    echo "Building Lambda Function Package"
+    sls package \
+        --stage $DRONE_DEPLOY_TO \
+        --package $PLUGIN_PACKAGE
+fi
