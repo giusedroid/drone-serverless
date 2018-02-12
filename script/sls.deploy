@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+sls --version
+
 if [ $1 == 'test' ];
 then
     echo "Test mode"
